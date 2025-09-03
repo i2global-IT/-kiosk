@@ -3,30 +3,38 @@ import apiHelper from "../../service/api";
 import Storage from "../../uitility/Sotrage";
 
 export const registerFace = createAsyncThunk(
-  'kiosk/mark_attendance',
-  async (
-    {  imagebase64 }: { imagebase64: string },
-    { rejectWithValue }
-  ) => {
+  "kiosk/mark_attendance",
+  async ({ imagebase64 }: { imagebase64: string }, { rejectWithValue }) => {
+    console.log("Employee Register Response >>>", imagebase64);
+
     try {
-           const organization_id = await Storage.getItem('organization_id');
-      const response: any = await apiHelper.post(  'kiosk/mark_attendance', {
-        collection_id: "dummy_test",
-        organization_id:  organization_id,
-        image: imagebase64,
+      const organization_id = await Storage.getItem("organization_id");
+
+      const formData = new FormData();
+      formData.append("collection_id", "dummy_test");
+      formData.append("organization_id", organization_id);
+      formData.append("image", {
+        uri: `data:image/jpeg;base64,${imagebase64}`,
+        name: "face.jpg",
+        type: "image/jpeg",
       });
 
-      console.log('Employee Register Response >>>', response.data);
+      const response: any = await apiHelper.post(
+        "kiosk/mark_attendance",
+        formData,
+        { "Content-Type": "multipart/form-data" }
+      );
 
       return response.data;
     } catch (error: any) {
-      console.log('Employee Register Error >>>', error);
+      console.log("Employee Register Error >>>", error);
       return rejectWithValue(
-        error.response?.data?.message || error.message || 'Something went wrong'
+        error.response?.data?.message || error.message || "Something went wrong"
       );
     }
   }
 );
+
 const addEmp = createSlice({
   name: 'registerfaceSlice',
   initialState: {

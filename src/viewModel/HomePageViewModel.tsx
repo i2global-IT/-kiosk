@@ -132,6 +132,8 @@ const dispatch=useDispatch();
 //   }
 // };
 const handleVerify = async () => {
+      console.log("📸 Captured Image:", ); // contains `path` or `uri`
+
   try {
     if (!cameraRef.current) return;
 
@@ -140,34 +142,34 @@ const handleVerify = async () => {
     console.log("📸 Captured Image:", image); // contains `path` or `uri`
 
     const fileUri = Platform.OS === "android" ? "file://" + image.path : image.path;
-
+await apicall(fileUri);
     // Convert to base64 using FileReader
-    const response = await fetch(fileUri);
-    const blob = await response.blob();
+    // const response = await fetch(fileUri);
+    // const blob = await response.blob();
 
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64data = reader.result as string; // 👉 base64 string with prefix
-      console.log("✅ Base64 Image:", base64data);
+    // const reader = new FileReader();
+    // reader.onloadend = async () => {
+    //   const base64data = reader.result as string; // 👉 base64 string with prefix
+    //   console.log("✅ Base64 Image:", base64data);
 
-      // If you only want raw base64 (without prefix)
-      const rawBase64 = base64data.split(",")[1];
+    //   // If you only want raw base64 (without prefix)
+    //   const rawBase64 = base64data.split(",")[1];
 
-      setCapturedImage(rawBase64);
-await apicall(rawBase64);
-      // dispatch(newEmployee({ employeeid: "INIT010", imagebase64: rawBase64 }));
-    };
-    reader.readAsDataURL(blob);
+    //   setCapturedImage(rawBase64);
+
+    //   // dispatch(newEmployee({ employeeid: "INIT010", imagebase64: rawBase64 }));
+    // };
+    // reader.readAsDataURL(blob);
   } catch (err) {
     console.error("❌ Capture error >>>", err);
   }
 };
 
 const apicall = async (rawBase64: string) => {
+     console.error("❌ Capture error >>>", rawBase64);
   try {
-    const res: any = await dispatch(
-      registerFace({ imagebase64: rawBase64 })
-    ).unwrap(); // unwraps the thunk result
+    const res: any = await dispatch(registerFace({ imageUri: rawBase64 }))
+    // unwraps the thunk result
 
     // ✅ Check status
     if (res?.status === 200 || res?.status === 201) {

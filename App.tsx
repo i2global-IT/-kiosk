@@ -16,6 +16,7 @@ import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
 import GlobalStyle from './src/uitility/GlobalStyle';
 import SettingsScreen from './src/screen/setting';
 import OnboardingScreen from './src/screen/SplashScreen';
+import SplashScreen from './src/screen/SplashScreen';
 
 
 const Stack = createNativeStackNavigator();
@@ -23,34 +24,34 @@ const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
-   <Provider store={store}>
-  <NavigationContainer>
-      <StatusBar
+    <Provider store={store}>
+      <NavigationContainer>
+        <StatusBar
           translucent
           backgroundColor="transparent"
-         // use "dark-content" if your header bg is light
+        // use "dark-content" if your header bg is light
         />
-     <Loader />
-    <Stack.Navigator
-      initialRouteName="OnboardingScreen"
-      screenOptions={{
-        gestureEnabled: true,
-        gestureDirection: 'horizontal',
-        headerShown: false,
-      }}
-    >
-      <Stack.Screen name="login" component={LoginScreen} />
-        <Stack.Screen name="HomeScreen" component={Dashboard} />
-            <Stack.Screen name="RegisterFaceScreen" component={RegisterFaceScreen} />
-                    <Stack.Screen name="PunchHistory" component={PunchHistory} />
- <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
+        <Loader />
+        <Stack.Navigator
+          initialRouteName="SplashScreen"
+          screenOptions={{
+            gestureEnabled: true,
+            gestureDirection: 'horizontal',
+            headerShown: false,
+          }}
+        >
+          <Stack.Screen name="login" component={LoginScreen} />
+          <Stack.Screen name="HomeScreen" component={Dashboard} />
+          <Stack.Screen name="RegisterFaceScreen" component={RegisterFaceScreen} />
+          <Stack.Screen name="PunchHistory" component={PunchHistory} />
+          <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
+          <Stack.Screen name="SplashScreen" component={SplashScreen} />
+          <Stack.Screen name="OnboardingScreen" component={OnboardingScreen} />
 
-      <Stack.Screen name="OnboardingScreen" component={OnboardingScreen} />              
-                      
-    </Stack.Navigator>
-       <Toast config={toastConfig} />
-  </NavigationContainer>
-</Provider>
+        </Stack.Navigator>
+        <Toast config={toastConfig} />
+      </NavigationContainer>
+    </Provider>
 
   );
 }

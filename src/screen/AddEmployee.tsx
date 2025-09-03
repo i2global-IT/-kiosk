@@ -16,10 +16,9 @@ import { AppColors } from "../uitility/color";
 import GlobalStyle from "../uitility/GlobalStyle";
 import CustomTextField from "../component/CustomTextfield";
 import { Camera, CameraType } from "react-native-camera-kit";
-import useHomePageViewModal from "../viewModel/HomePageViewModel";
 import useAddEmployeeViewModel from "../viewModel/AddEmpViewModel";
 const { width } = Dimensions.get('window');
-export const RegisterFaceScreen = () => {
+export const RegisterFaceScreen = ({navigation}) => {
     const viewModel=useAddEmployeeViewModel()
      const [showDialog, setShowDialog] = useState(false);
 
@@ -37,16 +36,23 @@ export const RegisterFaceScreen = () => {
             // use "dark-content" if your header bg is light
            />
       <View style={styles.header}>
-        <Ionicons name="arrow-back" size={22} color="#000" />
+        <TouchableOpacity
+        onPress={()=>{navigation.pop()}}>
+  <Ionicons name="arrow-back" size={22} color="#000" />
+        </TouchableOpacity>
+      
         <Text style={styles.headerTitle}>Add employee</Text>
       </View>
 
-
+   
 <CustomTextField heading='Employee ID' hintText='EMp001' onChangeText={function (text: string): void {
         throw new Error("Function not implemented.");
       } }/>
+    {viewModel?.errors.empid && (
+          <Text style={GlobalStyle.errorText}>{viewModel.errors.empid}</Text>
+        )}
       {/* Camera Circle */}
-       <View style={styles.outerCircle}>
+       <View style={[styles.outerCircle,{marginTop:10}]}>
   <View style={styles.cameraCircle}>
      <Camera
         ref={viewModel.cameraRef}
@@ -68,7 +74,7 @@ export const RegisterFaceScreen = () => {
 
       {/* Register Button */}
       <TouchableOpacity
-onPress={viewModel?.handleRegisterFace}
+onPress={viewModel?.onSave}
       activeOpacity={0.8} style={styles.buttonWrapper}>
         <LinearGradient
           colors={[AppColors.gradient, AppColors.gradient2, ]}

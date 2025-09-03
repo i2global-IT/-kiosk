@@ -21,9 +21,16 @@ import SettingViewModel from "../viewModel/SettingViewModel";
 import { useSelector } from "react-redux";
 
 import { RootState } from "../redux/store";
-const SettingsScreen = ({navigation}) => {
+import Storage from "../uitility/Sotrage";
+import { AppColors } from "../uitility/color";
+const SettingsScreen = ({ navigation }) => {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+
+  // ✅ State variables for device info
+  const [deviceName, setDeviceName] = useState("");
+  const [deviceEmail, setDeviceEmail] = useState("");
+  const [devicePassword, setDevicePassword] = useState("");
 
   const handleConfirmLogout = async () => {
     try {
@@ -34,74 +41,109 @@ const SettingsScreen = ({navigation}) => {
       console.log("Error clearing storage:", error);
     }
   };
-  const viewModal=SettingViewModel()
-  useEffect(()=>{
-viewModal.getDevices();
-  },[])
-   const device = viewModal.devices.length > 0 ? viewModal.devices[0] : null;
+
+  useEffect(() => {
+    getDevice();
+  }, []);
+
+  const getDevice = async () => {
+    try {
+      const name = await Storage.getItem("device_name");
+      const email = await Storage.getItem("device_email");
+      const password = await Storage.getItem("password");
+
+      setDeviceName(name || "");
+      setDeviceEmail(email || "");
+      setDevicePassword(password || "");
+    } catch (error) {
+      console.log("Error loading device info:", error);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
-         <Header title={"Settings"} onBack={()=>{navigation.pop()}}/>
+      <Header title={"Settings"} onBack={() => navigation.pop()} />
+
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={[GlobalStyle.semibold_black,{fontWeight:"700",fontSize:18,marginVertical:10}]}>
-            Device Information
+        <Text
+          style={[
+            GlobalStyle.semibold_black,
+            { fontWeight: "700", fontSize: 18, marginVertical: 10 },
+          ]}
+        >
+          Device Information
         </Text>
+
         {/* Device Info */}
-        <CustomTextField heading={"Device name"}    
-        hintText=""
-           value={device?.device_name ?? "--"}
-        readOnly={true}
-        isRequired={false}
-        onChangeText={function (text: string): void {
-                  throw new Error("Function not implemented.");
-              } }/>
-  
+        <CustomTextField
+          heading={"Device name"}
+          hintText=""
+          value={deviceName || "--"}
+          readOnly={true}
+          isRequired={false}
+          onChangeText={() => {}}
+        />
 
-        {/* Device name */}
-           <CustomTextField heading={"Email"} hintText={"attendance@gmail.com"}
-        readOnly={true}
-        value={device?.device_email ?? "--"}
-        isRequired={false}
-        onChangeText={function (text: string): void {
-                  throw new Error("Function not implemented.");
-              } }/>
-    
-<CustomTextField heading={"Password"} hintText={"*********"}
-value={passwordVisible ? device?.device_password ?? "" : "*********"}
-        readOnly={true}
-        isRequired={false}
-        suffixIcon={!passwordVisible?"eye-off" : "eye"}
-        onTap={() => setPasswordVisible(!passwordVisible)}
-        onChangeText={function (text: string): void {
-                  throw new Error("Function not implemented.");
-              } }/>
-     
+        <CustomTextField
+          heading={"Email"}
+          hintText={"attendance@gmail.com"}
+          readOnly={true}
+          value={deviceEmail || "--"}
+          isRequired={false}
+          onChangeText={() => {}}
+        />
 
-       
+        <CustomTextField
+          heading={"Password"}
+          hintText={"*********"}
+          value={
+            passwordVisible
+              ? devicePassword || ""
+              : devicePassword
+              ? "*********"
+              : "--"
+          }
+          readOnly={true}
+          isRequired={false}
+          suffixIcon={!passwordVisible ? "eye-off" : "eye"}
+          onTap={() => setPasswordVisible(!passwordVisible)}
+          onChangeText={() => {}}
+        />
 
         {/* Privacy Policy */}
-        <TouchableOpacity style={styles.option}
-          onPress={() => Linking.openURL("https://i2global.in/policies/")}>
+        <TouchableOpacity
+          style={styles.option}
+          onPress={() => Linking.openURL("https://i2global.in/policies/")}
+        >
           <Ionicons name="lock-closed" size={20} color="#8E31EC" />
-          <Text style={[GlobalStyle.semibold_black,styles.optionText]}>Privacy policies</Text>
+          <Text style={[GlobalStyle.semibold_black, styles.optionText]}>
+            Privacy policies
+          </Text>
           <Ionicons name="chevron-forward" size={20} color="#8E31EC" />
         </TouchableOpacity>
 
         {/* Help Center */}
-       <TouchableOpacity style={styles.option}
-          onPress={() => Linking.openURL("https://i2global.in/support/?issues=true&status=false")}>
+        <TouchableOpacity
+          style={styles.option}
+          onPress={() =>
+            Linking.openURL(
+              "https://i2global.in/support/?issues=true&status=false"
+            )
+          }
+        >
           <Ionicons name="help-circle" size={20} color="#8E31EC" />
           <Text style={styles.optionText}>Help center</Text>
           <Ionicons name="chevron-forward" size={20} color="#8E31EC" />
         </TouchableOpacity>
-<View
-style={{height:20}}></View>
-<CustomButton title="Logout"onPress={() => setModalVisible(true)} />
-        {/* Logout Button */}
-       
+
+        <View style={{ height: 20 }}></View>
+
+        <CustomButton title="Logout" onPress={() => setModalVisible(true)} />
       </ScrollView>
-       <Modal
+
+      {/* Logout Modal */}
+      <Modal
         transparent
         visible={modalVisible}
         animationType="fade"
@@ -109,19 +151,13 @@ style={{height:20}}></View>
       >
         <View style={styles.overlay}>
           <View style={styles.modalContent}>
-            <Text style={[GlobalStyle.semibold_black,{marginBottom:8}]}>Are you sure you want to logout?</Text>
+            <Text style={[GlobalStyle.semibold_black, { marginBottom: 8 }]}>
+              Are you sure you want to logout?
+            </Text>
 
             <View style={styles.buttonRow}>
-              <CustomButton
-                title="No"
-                onPress={() => setModalVisible(false)}
-             
-              />
-              <CustomButton
-                title="Yes"
-                onPress={handleConfirmLogout}
-               
-              />
+              <CustomButton title="No" onPress={() => setModalVisible(false)} />
+              <CustomButton title="Yes" onPress={handleConfirmLogout} />
             </View>
           </View>
         </View>
@@ -129,6 +165,7 @@ style={{height:20}}></View>
     </SafeAreaView>
   );
 };
+
 
 const styles = StyleSheet.create({
      overlay: {

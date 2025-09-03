@@ -131,7 +131,7 @@ get: async (url: string, params: any = {}, headers: any = {}) => {
   post: async (url: string, data: any = {}, headers: any = {}) => {
     const id = nextReqId();
     console.log(`📗 [${id}] POST call → ${url}`);
-    console.log(`📗 [${id}] Payload:`, maskSensitive(data));
+    console.log(`📗 [${id}] Payload:`,data);
     console.log(`📗 [${id}] Extra headers:`, maskSensitive(headers));
 
     return api.post(url, data, {

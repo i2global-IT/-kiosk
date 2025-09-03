@@ -5,6 +5,8 @@ import ui from './slice/ui';
 import addEmp from './slice/addEmp';
 import registerfaceSlice, { registerFace } from './slice/registerfaceSlice';
 import Settingslice from './slice/Settingslice';
+import PunchHisSlice from './slice/PunchHisSlice';
+import FilterSlice from './slice/FilterSlice';
 
 export const store = configureStore({
   reducer: {
@@ -13,7 +15,9 @@ export const store = configureStore({
     ui:ui,
     addEmp:addEmp,
   registerFace:registerfaceSlice,
-  Settingslice:Settingslice
+  Settingslice:Settingslice,
+  PunchHisSlice:PunchHisSlice,
+  FilterSlice:FilterSlice
   },
 });
 // ✅ Type for the whole state

@@ -83,9 +83,9 @@ const loginSlice = createSlice({
          Storage.setItem('organization_id', action.payload.organization_id);
         Storage.setItem('loginaccess', true);
         Storage.setItem('user_name', action.payload.user_name);
-
-
-
+        Storage.setItem('device_name', action.payload.device_name);
+        Storage.setItem('device_email', action.payload.device_email);
+        Storage.setItem('password', action.payload.password);
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;

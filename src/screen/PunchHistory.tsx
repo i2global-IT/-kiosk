@@ -1,15 +1,24 @@
-import React, { useState } from "react";
-import { View, TextInput, StyleSheet, FlatList, Image, StatusBar, ImageBackground } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, TextInput, StyleSheet, FlatList, Image, StatusBar, ImageBackground, Modal } from "react-native";
 import Ionicons from "@react-native-vector-icons/ionicons";
 
 import {  Text, TouchableOpacity, Dimensions } from "react-native";
 
 const { width } = Dimensions.get("window");
+import DateTimePickerModal from "react-native-modal-datetime-picker";
 
 import { AppColors } from "../uitility/color";
 import GlobalStyle from "../uitility/GlobalStyle";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { images } from "../uitility/image";
+import PunchHistoryViewModel from "../viewModel/PunchistoryViewModel";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "../redux/store";
+import { dailyattendance } from "../redux/slice/PunchHisSlice";
+import { Dropdown } from "react-native-element-dropdown";
+import CustomButton from "../component/CustomButton";
+import CustomTextField from "../component/CustomTextfield";
+import App from "../../App";
 
 
 interface HeaderProps {
@@ -39,7 +48,8 @@ export const Header: React.FC<HeaderProps> = ({ title, onBack,onpop }) => {
         {onpop&&  <TouchableOpacity onPress={onBack} style={styles.backBtn}>
             <Ionicons name="chevron-back-outline" size={22} color="#fff" />
           </TouchableOpacity>}
-          <Text style={[GlobalStyle.semibold_black,{fontWeight:"800", flex: 1, textAlign: "center", color: "#fff", fontSize: 18 }]}>
+          <Text style={[GlobalStyle.semibold_black,{fontWeight:"800",
+             flex: 1, textAlign: "center", color: "#fff", fontSize: 18 }]}>
             {title}
           </Text>
           <View style={{ width: 40 }} />
@@ -69,21 +79,33 @@ export const PunchCard = ({ name, role, id, time, status, image }: any) => {
 
   return (
     <View style={styles.card}>
-      <Image source={{ uri: image }} style={styles.avatar} />
-
+<Image
+  source={
+    image
+      ? { uri: image }
+      : images.photo // your local default image
+  }
+  style={styles.avatar}
+/>
       <View style={{ flex: 1, marginLeft: 12 }}>
         <Text style={[GlobalStyle.semibold_black,styles.name]}>{name}</Text>
-        <Text style={[GlobalStyle.regular_Font,styles.details]}>{role} • {id}</Text>
+        <Text style={[GlobalStyle.regular_Font,styles.details]}>{role} 
+          <Text style={{color:AppColors.primaryLinear}}> •   
+            </Text><Text style={[GlobalStyle.semibold_black,{fontSize:13}]}>
+              {id}
+              </Text></Text>
         <Text style={[GlobalStyle.regular_FontMedium,styles.time]}>🕒 {time}</Text>
       </View>
 
       <TouchableOpacity
         style={[
           styles.button,
-          { backgroundColor: isPunchIn ? "#4CAF50" : "#E53935" },
+          {  backgroundColor:status=="Not_Yet"?AppColors.addcolor:status=="IN"?"#08B74E":"#E53935"
+ },
         ]}
       >
-        <Text style={[GlobalStyle.regular_Font,styles.buttonText]}>{status}</Text>
+        <Text style={[GlobalStyle.regular_Font,styles.buttonText,{alignSelf:"center"
+        }]}>{status}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -92,44 +114,32 @@ export const PunchCard = ({ name, role, id, time, status, image }: any) => {
 
 
 
-const mockData = [
-  {
-    id: "1",
-    name: "Olivia Bennett",
-    role: "Marketing",
-    empId: "ID:010203",
-    time: "09:08 AM",
-    status: "Punch In",
-    image: "https://randomuser.me/api/portraits/women/1.jpg",
-  },
-  {
-    id: "2",
-    name: "Olivia Bennett",
-    role: "Marketing",
-    empId: "ID:010203",
-    time: "09:08 AM",
-    status: "Punch Out",
-    image: "https://randomuser.me/api/portraits/women/2.jpg",
-  },
-];
 
 export default function PunchHistory() {
   const [search, setSearch] = useState("");
-
-  const filteredData = mockData.filter(item =>
-    item.name.toLowerCase().includes(search.toLowerCase()) ||
-    item.empId.toLowerCase().includes(search.toLowerCase())
+const history = useSelector((state: RootState) => state.PunchHisSlice.employee_details);
+const dispatch=useDispatch()
+  const viewModel=PunchHistoryViewModel()
+useEffect(()=>{
+viewModel?.ini()
+},[])
+  const filteredData = history.filter(item =>
+    item.user_name.toLowerCase().includes(search.toLowerCase()) ||
+    item.employee_id.toLowerCase().includes(search.toLowerCase())
   );
+       
+const { page, hasMore, loading } = useSelector((state: RootState) => state.PunchHisSlice);
+ 
 
   return (
     <View style={{ flex: 1, backgroundColor: "#f5f5f5" }}>
       {/* Header */}
-      <Header title={"Punch History"} />
+      <Header title={"Punch History"}  />
 
       {/* Search + Filter */}
       <View style={styles.topRow}>
         <SearchBar value={search} onChange={setSearch} />
-        <TouchableOpacity style={styles.filterBtn}>
+        <TouchableOpacity style={styles.filterBtn} onPress={()=>{viewModel?.setIsVisible(true)}}>
           <Ionicons name="filter" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
@@ -141,36 +151,232 @@ export default function PunchHistory() {
           <Text style={[GlobalStyle.semibold_black, styles.todayText]}> Today</Text>
         </View>
 
-        <TouchableOpacity style={styles.sortBtn}>
+        {/* <TouchableOpacity style={styles.sortBtn}>
           <Ionicons name="swap-vertical" size={18} color="#FF7E00" />
           <Text style={[GlobalStyle.semibold_black, { color: "#FF7E00", marginLeft: 4, fontWeight: "700" }]}>
             Sort
           </Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
-      {/* List */}
-      <FlatList
-        data={filteredData}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <PunchCard
-            name={item.name}
-            role={item.role}
-            id={item.empId}
-            time={item.time}
-            status={item.status}
-            image={item.image}
-          />
-        )}
-        contentContainerStyle={{ paddingBottom: 20 }}
-      />
+
+<FlatList
+  data={filteredData}
+  keyExtractor={(item:any) => item.employee_id.toString()}
+  renderItem={({ item }) => (
+    <PunchCard
+      name={item.user_name}   // adjust keys based on API
+      role={item.designation_name}
+      id={item.employee_id}
+      time={"09:08 AM"}
+      status={item.status}
+      image={item.photo}
+    />
+  )}
+     onEndReached={() => {
+      if (hasMore && !loading) {
+        dispatch(dailyattendance({  page, per_page: 20 }));
+      }
+    }}
+        onEndReachedThreshold={0.5}
+  contentContainerStyle={{ paddingBottom: 20 }}
+/>
+   <Modal
+        visible={viewModel?.isVisible}
+        onDismiss={() =>viewModel?. setIsVisible(false)}
+     transparent animationType="fade"
+        
+      >
+        <View style={styles.modalContainer}>
+            <View >
+<FilterModal onpress={() =>
+{
+viewModel?. setIsVisible(false);
+   }
+}/>
+</View>
+        </View>
+
+      </Modal>
     </View>
   );
 }
 
 
+
+const FilterModal = ({onpress}:{onpress:any}) => {
+const dispatch=useDispatch()
+const designation:any = useSelector((state: RootState) => state.FilterSlice.desingationList);
+const depatment:any = useSelector((state: RootState) => state.FilterSlice.departmentlist);
+
+ 
+const viewmodal=PunchHistoryViewModel()
+  
+
+  
+  return (
+    <View>
+      
+        <View style={styles.modalContent}>
+          {/* Punch Type */}
+          <Text style={styles.label}>Punch Type</Text>
+          <Dropdown
+            style={styles.dropdown}
+            data={viewmodal?.punchTypeData}
+            labelField="label"
+            valueField="value"
+            placeholder="All types"
+            value={viewmodal?.punchType}
+            onChange={(item) => viewmodal?.setPunchType(item.value)}
+          />
+
+          {/* Date Range */}
+       
+        <CustomTextField heading={"Date range"}
+        isRequired={false}
+        value={viewmodal?.dateRange}
+        suffixIcon="calendar"
+        onTap={viewmodal?.showDatePicker}
+         hintText={"Select the Date"} onChangeText={function (text: string): void {
+          throw new Error("Function not implemented.");
+        } }/>
+ {/* Date Picker */}
+      <DateTimePickerModal
+        isVisible={viewmodal?.isDatePickerVisible}
+        mode="date"
+        onConfirm={viewmodal?.handleConfirm}
+        onCancel={viewmodal?.hideDatePicker}
+      />
+          {/* Department */}
+          <Text style={styles.label}>Desgination</Text>
+   <Dropdown
+  style={[styles.dropdown, { marginBottom: 10 }]}
+  data={
+    designation?.designations?.map((d: any) => ({
+      label: d.designation_name,
+      value: d.designation_name, // 👈 must add this
+    })) || []
+  }
+  labelField="label"
+  valueField="value"
+  placeholder="All Designation"
+  value={viewmodal?.desginaion} // should match the "value", not "label"
+  onChange={(item) => {
+    viewmodal?.setdesingation(item.value);
+   
+    console.log("selected....", item.value);
+  }}
+/>
+
+
+<Text style={styles.label}>Department {viewmodal.desginaion}</Text>
+          <Dropdown
+            style={[styles.dropdown,{marginBottom:10}]}
+            data={
+    depatment?.map((d: any) => ({
+      label: d.department_name,
+      value: d.department_name,
+    })) || []
+  }
+            labelField="label"
+            valueField="value"
+            placeholder="All Department"
+            value={viewmodal?.departments}
+            onChange={(item) =>viewmodal?. setDepartment(item.value)}
+          />
+
+          <View style={{width:"50%",alignSelf:"center"}}>
+ <CustomButton title="Submit" onPress={()=>{
+  onpress();
+  viewmodal?.filteroption();
+ }
+
+
+  
+  }
+  
+    />
+          </View>
+         
+          <View style={{marginBottom:10}}>
+
+          </View>
+        </View>
+
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
+   modalContainer: {
+    flex: 1,
+    width: "100%",
+    justifyContent: 'center',
+    padding: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: "white",
+    padding: 10,
+    borderRadius: 10,
+    elevation: 5, // Adds shadow on Android
+  },
+  modalWrapper: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  // modalContent: {
+  //   backgroundColor: "transparent", // transparent backdrop
+  //   justifyContent: "center",
+  //   alignItems: "center",
+  // },
+  innerBox: {
+    backgroundColor: "#fff", // actual modal box
+    padding: 16,
+    borderRadius: 12,
+    width: "90%",
+    elevation: 5,
+  },
+  label: {
+    marginBottom: 8,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  dropdown: {
+    height: 50,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    backgroundColor: "#fff",
+  },
+  placeholderStyle: {
+    fontSize: 14,
+    color: "#999",
+  },
+  selectedTextStyle: {
+    fontSize: 14,
+    color: "#000",
+  },
+  inputSearchStyle: {
+    height: 40,
+    fontSize: 14,
+  },
+  iconStyle: {
+    width: 20,
+    height: 20,
+  },
+   container: { flex: 1, justifyContent: "center", alignItems: "center" },
+  filterButton: {
+    backgroundColor: "#6200EE",
+    padding: 12,
+    borderRadius: 30,
+  },
+  modal: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
       bg: {
     width: "100%",
     paddingBottom: 16,
@@ -251,6 +457,7 @@ alignSelf:"center"
     flex: 1,
     marginLeft: 8,
     paddingVertical: 12,
+    color:AppColors.black
     
   },
     card: {
@@ -271,10 +478,11 @@ alignSelf:"center"
   details: { color: "#777", fontSize: 13 },
   time: { fontSize: 12, color: "#f57c00", marginTop: 4 },
   button: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 6,
     paddingVertical: 6,
-    borderRadius: 10,
+    width:"18%",
+    borderRadius: 4,
   },
-  buttonText: { color: "#fff", fontWeight: "bold" },
+  buttonText: { color: "#fff", fontWeight: "bold",fontSize:10 },
 
 });

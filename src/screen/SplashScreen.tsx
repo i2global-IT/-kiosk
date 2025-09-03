@@ -47,10 +47,10 @@ const OnboardingScreen = ({ navigation }) => {
     const slideIndex = Math.round(event.nativeEvent.contentOffset.x / width);
     setCurrentIndex(slideIndex);
   };
-    let accessToken:any;
+    let loginaccess:any;
   // auto scroll effect
   useEffect(() => {
-    accessToken =  Storage.getItem('accessToken');
+
     const interval = setInterval(() => {
       let nextIndex = (currentIndex + 1) % slides.length;
       setCurrentIndex(nextIndex);
@@ -109,8 +109,10 @@ const OnboardingScreen = ({ navigation }) => {
         {/* Action Button */}
         <TouchableOpacity
           style={styles.button}
-          onPress={() =>{
-            if(accessToken!=null){
+          onPress={async () =>{
+                loginaccess = JSON.parse( await Storage.getItem('loginaccess')) 
+            console.log("login ascesss",loginaccess)
+            if(loginaccess==true){
   navigation.navigate("HomeScreen")
             }else{
   navigation.navigate("login")

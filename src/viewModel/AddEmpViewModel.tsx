@@ -10,11 +10,35 @@ import Toast from "react-native-toast-message";
 export default function useAddEmployeeViewModel() { 
    const [capturedImage, setCapturedImage] = useState<string | null>(null);
     const { message, error } = useSelector((state: RootState) => state.addEmp);
+    const [empid,setempid]=useState();
   const cameraRef = useRef(null);
   const dispatch = useDispatch();
 
 
+ const [errors, setErrors] = useState({});
+ const validate = () => {
+    let tempErrors = {};
+
+    if (!empid?.trim()) {
+      tempErrors.empid = "Device name is required";
+    }
+
+    setErrors(tempErrors);
+    return Object.keys(tempErrors).length === 0;
+  };
+ const onSave = () => {
+    if (validate()) {
+      // handleSave();
+   
+     handleRegisterFace()
+    }
+  };
+
+
 const handleRegisterFace = async () => {
+
+
+
   try {
     if (!cameraRef.current) return;
 
@@ -87,5 +111,5 @@ const apicall = async (rawBase64: string) => {
   }, [message, error, dispatch]);
 
 return{
-handleRegisterFace,cameraRef
+handleRegisterFace,cameraRef,empid,setempid,validate,errors,onSave
 }}

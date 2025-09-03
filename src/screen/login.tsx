@@ -56,15 +56,26 @@ export const LoginScreen = ({ navigation }) => {
         {/* Email Field */}
         <View style={styles.inputContainer}>
 
-      <CustomTextField value={viewModel.email}
-          prefixIcon={"person-outline"}
-          heading="Email ID" hintText="Enter your Email" 
-          onChangeText={viewModel.setEmail}/>
-       <CustomTextField value={viewModel.password}
-         prefixIcon={"lock-closed-outline"}
-       heading="Password" hintText="Password" 
-       suffixIcon={"eye"}
-      onChangeText={viewModel.setPassword}/>
+<CustomTextField
+  value={viewModel.email}
+  heading="Email ID"
+  hintText="Enter your Email"
+  prefixIcon="person-outline"
+  onChangeText={viewModel.setEmail}
+  hasError={viewModel.isSubmitted && !!viewModel.emailError}  // ✅ show error only after submit
+  errorText={viewModel.emailError}
+/>
+<CustomTextField
+  value={viewModel.password}
+  heading="Password"
+  hintText="Enter your Password"
+  prefixIcon="lock-closed-outline"
+  secureTextEntry
+   onChangeText={viewModel.setPassword}  
+  hasError={viewModel.isSubmitted && !!viewModel.passError}  // ✅ show error only after submit
+  errorText={viewModel.passError}
+/>
+      
         </View>
         <View style={{width:"100%"}}>
 <CustomButton  title="Sign in"  onPress={()=>{viewModel.handleLogin()}}/>
