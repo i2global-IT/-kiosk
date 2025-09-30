@@ -2,13 +2,15 @@ import React from 'react';
 import { Modal, View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import Ionicons from '@react-native-vector-icons/ionicons';
 import GlobalStyle from '../../uitility/GlobalStyle';
+import { images } from '../../uitility/image';
+import { AppColors } from '../../uitility/color';
 
 interface ConfirmDialogProps {
   visible: boolean;
   onClose: () => void;
   user: {
     name: string;
-    role: string;
+    punch: string;
     id: string;
     punchTime: string;
     image: any;
@@ -20,37 +22,21 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({ visible, onClose, user })
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
         <View style={styles.card}>
-          {/* Profile Image */}
-          <Image source={user.image} style={styles.avatar} />
-
-          {/* Confirm Icon */}
+        <Ionicons style={{alignSelf:"flex-end",padding:8}} name="close" size={15} onPress={onClose}/>
+          <Image source={user.image} style={[styles.avatar,{borderColor:user.punch=="Punch IN"?"#05DF72":"#FF0000"}]} />
           <View style={styles.iconRow}>
-            <Ionicons name="checkmark-circle" size={22} color="green" />
-            <Text style={styles.confirmText}>Punch-in confirmed</Text>
+ <Image source={images.check} style={[styles.avatar,{height:20,width:20}]} />
+             <Text style={styles.confirmText}>{user.punch} confirmed</Text>
           </View>
-
-          {/* Welcome Message */}
-          {/* <Text style={styles.welcomeText}>Welcome, {user.name}!</Text>
-          <Text style={styles.subText}>
-            {user.role} • ID: {user.id}
-          </Text> */}
-
-          {/* Punch-in Time */}
-          {/* <View style={styles.timeBox}>
-            <Text style={styles.timeText}>Punch in : {user.punchTime}</Text>
-          </View> */}
-<View style={styles.card}>
-      <Text style={[GlobalStyle.regular_Font,styles.welcomeText]}>Welcome, {user.name}!</Text>
+<View style={[styles.card,{borderColor:user.punch=="Punch IN"?"#05DF72":"#FF0000"}]}>
+      <Text style={[GlobalStyle.bold_white,styles.welcomeText]}>Welcome, {user.name}!</Text>
       <Text style={[GlobalStyle.regular_Font,styles.subText]}>
-        {user.role}• ID: {user.id}
+        ID: {user.id}
       </Text>
-      <Text style={[GlobalStyle.semibold_black,styles.punchText]}>Punch in : <Text style={styles.time}>{user.punchTime}</Text></Text>
-    </View>
-          {/* Close Button */}
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeText}>Close</Text>
-          </TouchableOpacity>
-          
+      <Text style={[GlobalStyle.semibold_black,styles.punchText]}>
+        {user.punch=="Punch IN"?"  Punch in :":"  Punch out :"}
+       <Text style={styles.time}>{user.punchTime}</Text></Text>
+    </View>      
         </View>
       </View>
     </Modal>
@@ -59,7 +45,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({ visible, onClose, user })
 
 const styles = StyleSheet.create({
    card: {
-    backgroundColor: '#FCF4FF',
+    backgroundColor: '#ffff',
     borderWidth: 2,
     borderColor: '#E2A3FA',
     borderRadius: 12,
@@ -68,16 +54,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '90%',
     alignSelf: 'center',
+    marginTop:10
   },
   welcomeText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#000',
     marginBottom: 4,
   },
   subText: {
     fontSize: 14,
-    color: '#5D5C5C',
+    color:AppColors.black,
     marginBottom: 6,
   },
   punchText: {
@@ -103,12 +90,13 @@ const styles = StyleSheet.create({
   //   alignItems: 'center',
   // },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 150,
+    height: 150,
+    borderRadius: 100,
     borderWidth: 2,
-    borderColor: '#4CAF50',
+    borderColor: '#05DF72',
     marginBottom: 10,
+    marginTop:10
   },
   iconRow: {
     flexDirection: 'row',
@@ -137,8 +125,10 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: '#eee',
+    borderRadius: 18,
+    backgroundColor: AppColors.secondary,
+    borderWidth:1,
+    borderColor:AppColors.gradient
   },
   closeText: {
     fontSize: 14,

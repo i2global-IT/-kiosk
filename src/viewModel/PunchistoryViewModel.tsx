@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from "react-redux";
-import { dailyattendance } from "../redux/slice/PunchHisSlice";
+import { dailyattendance, resetAttendance } from "../redux/slice/PunchHisSlice";
 import { useState } from "react";
 import { RootState } from "../redux/store";
 import { department, desingation } from "../redux/slice/FilterSlice";
@@ -17,9 +17,9 @@ const [dateRange, setDateRange] = useState("");  const [isDatePickerVisible, set
       const [desginaion, setdesingation] = useState<any>("");
 
   const punchTypeData = [
-    { label: "All types", value: "all" },
-    { label: "Punch-in", value: "punchin" },
-    { label: "Punch Out", value: "punchout" },
+    { label: "Not Yet", value: "Not_Yet" },
+    { label: "Punch-in", value: "IN" },
+    { label: "Punch Out", value: "OUT" },
   ];
 
 const { page, hasMore, loading } = useSelector((state: RootState) => state.PunchHisSlice);
@@ -39,16 +39,16 @@ getDevices()
 
 const getDevices = async () => {
   try {
-   const value = await  dispatch(dailyattendance({  page, per_page: 20 }));
+      const today = new Date().toISOString().split("T")[0]; // format YYYY-MM-DD
+    const selectedDate = dateRange || today;
+   await  dispatch(dailyattendance({  page, per_page: 20,date:selectedDate,department:departments,desgination:desginaion,status:punchType }));
   } catch (err: any) {
-
   }
 };
 ////department list
 const getDepartment = async () => {
   try {
-     const value =   dispatch(department());
- console.log("mulitple dep",value)   
+   dispatch(department());
   } catch (err: any) {
 
   }
@@ -66,24 +66,44 @@ const closemodal=async()=>{
 setIsVisible(false)
 }
 
-
 const filteroption=async()=>{
-  console.log("correctio..des....",desginaion)
    try {
+    new Date().toISOString().split("T")[0]; // format YYYY-MM-DD
+    dispatch(resetAttendance()); // reset state
+    await  dispatch(dailyattendance({  page:0, per_page:20,date:dateRange,department:departments,desgination:desginaion,status:punchType}));
     setIsVisible(false)
-    await  dispatch(dailyattendance({  page, per_page: 20,date:dateRange,department:departments,desgination:desginaion,status:punchType}));
-
-
 
   } catch (err: any) {
-  console.log("correctio...errr...",err)
+  
   }
 
+}
 
+const filteroption3=async()=>{
+
+   try {
+    await  dispatch(dailyattendance({  page, per_page:20,date:dateRange,department:departments,desgination:desginaion,status:punchType}));    
+    setIsVisible(false)
+
+  } catch (err: any) { 
+  }
+}
+
+const daterange=async()=>{
+      dispatch(
+        dailyattendance({
+          page,
+          per_page: 20,
+          department: departments,
+          desgination: desginaion,
+          status: punchType,
+          date: dateRange,
+        })
+      );
 }
 return{
-    getDevices,closemodal,isVisible,setIsVisible,punchTypeData,desginaion, setdesingation,
+    getDevices,closemodal,isVisible,setIsVisible,punchTypeData,desginaion, daterange,setdesingation,filteroption3,
     getDepartment,getDesignation,departmentlists,punchType, setPunchType,setDepartment,filteroption,
-    ini,dateRange,isDatePickerVisible,showDatePicker,hideDatePicker ,handleConfirm,departments
+    ini,dateRange,isDatePickerVisible,showDatePicker,hideDatePicker ,handleConfirm,departments,setDateRange
 }
 }

@@ -1,7 +1,6 @@
 
 import { Provider } from 'react-redux';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
 import { store } from './src/redux/store';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { LoginScreen } from './src/screen/login';
@@ -17,15 +16,15 @@ import GlobalStyle from './src/uitility/GlobalStyle';
 import SettingsScreen from './src/screen/setting';
 import OnboardingScreen from './src/screen/SplashScreen';
 import SplashScreen from './src/screen/SplashScreen';
+import Splash from './src/screen/Splash';
+import { setNavigationRef } from './src/service/api';
 
 
 const Stack = createNativeStackNavigator();
-
-
 export default function App() {
   return (
     <Provider store={store}>
-      <NavigationContainer>
+      <NavigationContainer ref={navigator => setNavigationRef(navigator)}>
         <StatusBar
           translucent
           backgroundColor="transparent"
@@ -33,13 +32,14 @@ export default function App() {
         />
         <Loader />
         <Stack.Navigator
-          initialRouteName="SplashScreen"
+          initialRouteName="Splash"
           screenOptions={{
             gestureEnabled: true,
             gestureDirection: 'horizontal',
             headerShown: false,
           }}
-        >
+        >     
+          <Stack.Screen name="Splash" component={Splash} />
           <Stack.Screen name="login" component={LoginScreen} />
           <Stack.Screen name="HomeScreen" component={Dashboard} />
           <Stack.Screen name="RegisterFaceScreen" component={RegisterFaceScreen} />
@@ -47,7 +47,6 @@ export default function App() {
           <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
           <Stack.Screen name="SplashScreen" component={SplashScreen} />
           <Stack.Screen name="OnboardingScreen" component={OnboardingScreen} />
-
         </Stack.Navigator>
         <Toast config={toastConfig} />
       </NavigationContainer>
@@ -66,9 +65,22 @@ const toastConfig = {
   ),
   failed: (props) => (
     <ErrorToast
+    
       {...props}
-      style={{ borderLeftColor: 'red' }}
-      text1Style={GlobalStyle.semibold_black}
+
+      style={[GlobalStyle.semibold_black,{ borderLeftColor: 'red' ,}]}
+       text1Style={{
+    ...GlobalStyle.semibold_black,
+    fontSize: 14,
+    flexShrink: 1,
+  }}
+        text2Style={[
+        GlobalStyle.semibold_black,
+        { fontSize: 13, color: 'black' }, // secondary message style
+      ]}
+  text1NumberOfLines={5} // allow up to 5 lines
+  text2NumberOfLines={3} // optional secondary tex
+
     />
   ),
 };

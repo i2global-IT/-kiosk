@@ -1,5 +1,4 @@
 import { configureStore } from '@reduxjs/toolkit';
-import counterReducer from '../redux/slice/counterSlice';
 import lognReducer from '../redux/slice/loginSlic';
 import ui from './slice/ui';
 import addEmp from './slice/addEmp';
@@ -10,7 +9,7 @@ import FilterSlice from './slice/FilterSlice';
 
 export const store = configureStore({
   reducer: {
-    counter: counterReducer,
+
     login:lognReducer,
     ui:ui,
     addEmp:addEmp,

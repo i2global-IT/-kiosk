@@ -1,55 +1,90 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import apiHelper from "../../service/api";
+import axios from "axios";
 import Storage from "../../uitility/Sotrage";
+import { startLoading, stopLoading } from "./ui";
+import { store } from "../store";
+import { baseUrl } from "../../service/endpoint";
+
+
 
 export const registerFace = createAsyncThunk(
   "kiosk/mark_attendance",
-  async ({ imagebase64 }: { imagebase64: string }, { rejectWithValue }) => {
-    console.log("Employee Register Response >>>", imagebase64);
-
+  async ({ imageUri ,punchTime,address}: { imageUri: string,punchTime:string ,address:String}, { rejectWithValue }) => {
     try {
-      const organization_id = await Storage.getItem("organization_id");
-
+      store.dispatch(startLoading());
+      const token = await Storage.getItem("accessToken");
       const formData = new FormData();
-      formData.append("collection_id", "dummy_test");
-      formData.append("organization_id", organization_id);
-      formData.append("image", {
-        uri: `data:image/jpeg;base64,${imagebase64}`,
+     formData.append("punch", punchTime|| "");
+     formData.append("intime_geolocation", address||"");
+      formData.append("file", {
+        uri: imageUri,
         name: "face.jpg",
         type: "image/jpeg",
-      });
-
-      const response: any = await apiHelper.post(
-        "kiosk/mark_attendance",
+      } as any);
+     
+      const response = await axios.post(
+        `${baseUrl.baseUrl}kiosk/mark_attendance`,
         formData,
-        { "Content-Type": "multipart/form-data" }
+        {
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "multipart/form-data",
+            "X-App-key": "33",
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
-
-      return response.data;
+      return { status: response.status, data: response.data };
     } catch (error: any) {
-      console.log("Employee Register Error >>>", error);
-      return rejectWithValue(
-        error.response?.data?.message || error.message || "Something went wrong"
-      );
+      store.dispatch(stopLoading());
+      if (axios.isAxiosError(error) && error.response?.data) {
+        const backendMessage = error.response.data?.error || error.response.data?.message;
+        // Check for "no faces" error
+        const message =
+          backendMessage?.includes("There are no faces") ||
+          backendMessage?.includes("InvalidParameterException")
+            ? "No face detected in the image. Please make sure your face is clearly visible."
+            : backendMessage || "Something went wrong.";
+
+        return rejectWithValue({
+          status: error.response.status,
+          message,
+        });
+      }
+
+      return rejectWithValue({
+        status: 0,
+        message: error.message || "Something went wrong",
+      });
+    } finally {
+      store.dispatch(stopLoading());
     }
   }
 );
 
+
 const addEmp = createSlice({
-  name: 'registerfaceSlice',
+  name: "addEmp",
   initialState: {
-    empId: null,
+    details: null,
     loading: false,
     error: null,
     message: null,
+    fileUri: null,
+    status: null, // store status code
   },
   reducers: {
-      resetMessage: (state) => {
-    state.message = null;
-    state.error = null;
-  },
+    resetMessage: (state) => {
+      state.message = null;
+      state.error = null;
+      state.status = null;
+    },
     clearMessage: (state) => {
       state.message = null;
+    },
+    setFileUri: (state, action) => {
+      state.fileUri = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -58,22 +93,29 @@ const addEmp = createSlice({
         state.loading = true;
         state.error = null;
         state.message = null;
+        state.status = null;
       })
       .addCase(registerFace.fulfilled, (state, action) => {
         state.loading = false;
         state.error = null;
-        state.empId = action.payload.employee_id; // assuming API returns this
-        state.message = 'Employee registered successfully 🎉';
+          state.details = action.payload.data?.data?.response || null;
 
-      
+        state.message =
+          action.payload.data.message || "Employee registered successfully 🎉";
+        state.status = action.payload.status;
+    
       })
       .addCase(registerFace.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
-        state.message = action.payload as string;
+        state.error = action.payload?.message || "Something went wrong";
+        state.message = action.payload?.message || "Something went wrong";
+        state.status = action.payload?.status || 0;
+    
       });
   },
 });
 
-export const { clearMessage ,resetMessage} = addEmp.actions;
+
+
+export const { clearMessage, resetMessage, setFileUri, } = addEmp.actions;
 export default addEmp.reducer;

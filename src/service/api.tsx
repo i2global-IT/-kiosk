@@ -5,6 +5,7 @@ import { Alert } from 'react-native';
 import Storage from '../uitility/Sotrage';
 import { store } from '../redux/store';
 import { startLoading, stopLoading } from '../redux/slice/ui';
+import { baseUrl } from './endpoint';
 
 // Endpoints that do NOT require token
 const EXCLUDE_TOKEN = ['device_login'];
@@ -37,7 +38,7 @@ type AxiosConfigWithMeta = AxiosRequestConfig & {
 
 // Create instance
 const api = axios.create({
-  baseURL: 'https://devhrms.i2global.co.in/api/v2/',
+  baseURL: `${baseUrl.baseUrl}`,
   timeout: 10000,
 });
 
@@ -45,65 +46,84 @@ const api = axios.create({
 // ---------------- REQUEST INTERCEPTOR ----------------
 api.interceptors.request.use(
   async (config: AxiosConfigWithMeta) => {
-    // Start loader
     store.dispatch(startLoading());
 
-    // Attach metadata
     const id = nextReqId();
     config.metadata = { id, startTime: Date.now() };
 
     const state = await NetInfo.fetch();
-    if (!state.isConnected) {
-      Alert.alert('No Internet', 'Please check your internet connection.');
-  
-      store.dispatch(stopLoading()); // Stop loader
-      return Promise.reject({ message: 'No internet connection' });
-    }
+    // if (!state.isConnected) {
+    //   store.dispatch(stopLoading());
+    //   Alert.alert('No Internet', 'Please check your internet connection.');
+    //   return Promise.reject(new Error('No internet connection'));
+    // }
 
-    // STEP 3: Token decision
+    // Only add token if needed
     const requiresToken = !EXCLUDE_TOKEN.some((url) => (config.url ?? '').includes(url));
-    console.log(`🔷 [${id}] STEP 3: Token required = ${requiresToken}`);
     if (requiresToken) {
       const token = await Storage.getItem('accessToken');
-      console.log(`🔷 [${id}] Token ${token ? 'FOUND' : 'NOT FOUND'}`);
+      
       if (token) {
         config.headers = {
-          ...(config.headers || {}),
+          ...config.headers, // ✅ don’t drop existing headers (like FormData)
           Authorization: `Bearer ${token}`,
-          "X-App-Key":"33"
+          "X-App-Key": "33",
         };
       }
     }
 
-  
-    console.log(`🔷 [${id}] Request ready → sending...\n`);
     return config;
   },
   (error: AxiosError) => {
-    store.dispatch(stopLoading()); // Stop loader if request build fails
-    console.log('❌ Request build error:', error.message);
+    store.dispatch(stopLoading());
     return Promise.reject(error);
   }
 );
 
+export let navigationRef:any = null;
+export const setNavigationRef = (ref) => {
+  navigationRef = ref;
+};
 // ---------------- RESPONSE INTERCEPTOR ----------------
 // Response interceptor
+// Response Interceptor
 api.interceptors.response.use(
   (response: AxiosResponse) => {
-    store.dispatch(stopLoading()); // stop loader on success
+    store.dispatch(stopLoading());
     return response;
   },
   async (error: AxiosError) => {
-    store.dispatch(stopLoading()); // stop loader on error
+    store.dispatch(stopLoading());
 
     if (!error.response) {
-      Alert.alert('Network Error', 'Please check your internet connection.');
-      return Promise.reject({ message: 'Network Error', error });
+      return Promise.reject({
+        message: 'Network Error',
+        status: 0,
+      });
     }
 
     const { status, data } = error.response;
-    console.log(`HTTP ${status} error:`, maskSensitive(data));
-    return Promise.reject(error);
+
+    // Extract clean error
+    const customError = {
+      status,
+      message: (data as any)?.message || `Request failed with status ${status}`,
+    };
+
+
+    // 🚨 Handle 401 Unauthorized
+    if (status === 401) {
+   
+
+      // Navigate to Login screen
+      // if you are using navigationRef
+      navigationRef.current?.reset({
+        index: 0,
+        routes: [{ name: 'login' }],
+      });
+    }
+
+    return Promise.reject(customError);
   }
 );
 
@@ -129,10 +149,6 @@ get: async (url: string, params: any = {}, headers: any = {}) => {
   });
 },
   post: async (url: string, data: any = {}, headers: any = {}) => {
-    const id = nextReqId();
-    console.log(`📗 [${id}] POST call → ${url}`);
-    console.log(`📗 [${id}] Payload:`,data);
-    console.log(`📗 [${id}] Extra headers:`, maskSensitive(headers));
 
     return api.post(url, data, {
       headers: {
@@ -143,7 +159,7 @@ get: async (url: string, params: any = {}, headers: any = {}) => {
   },
 
   put: async (url: string, data: any = {}, headers: any = {}) => {
-    const id = nextReqId();
+ 
     return api.put(url, data, {
       headers: {
         ...DEFAULT_HEADERS,
@@ -153,7 +169,7 @@ get: async (url: string, params: any = {}, headers: any = {}) => {
   },
 
   delete: async (url: string, data: any = {}, headers: any = {}) => {
-    const id = nextReqId();
+
     return api.delete(url, {
       data,
       headers: {

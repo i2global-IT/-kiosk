@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import apiHelper from '../../service/api';
-export const dailyattendance = createAsyncThunk(
+export const dailyattendance:any = createAsyncThunk(
   "daily/live_attendance/list",
   async (
     {
@@ -9,41 +9,40 @@ export const dailyattendance = createAsyncThunk(
       department,
       desgination,
       status,
-      date
+      date,
+          search,   // 👈 added here
+
     }: {
       page?: number;
       per_page?: number;
-      department?: any;
-      desgination?: any;
+      department?: string;
+      desgination?: string;
       status?: string;
       date?: string;
+          search?: string;   // 👈 added here
+
     },
     { rejectWithValue }
   ) => {
     try {
-       console.log("live_attendance....");
-      const response: any = await apiHelper.get(
-        `daily/live_attendance/list?page=${page}&per_page=${per_page}${
-          department ? `&department_name=${department}` : ""}
-          ${
-          desgination ? `&designation_name=${desgination}` : ""}
-            ${
-          status ? `&status=${status}` : ""}
-           ${
-          date ? `&date=${date}` : ""}`
-          
-      );
+      const params = new URLSearchParams();
 
-      console.log("live_attendance....", response?.data);
+      if (page !== undefined) params.append("page", page.toString());
+      if (per_page !== undefined) params.append("per_page", per_page.toString());
+      if (department) params.append("department_name", department.trim());
+      if (desgination) params.append("designation_name", desgination.trim());
+      if (status) params.append("status", status.trim());
+      if (date) params.append("attendance_date", date.trim());
+          if (search) params.append("search", search.trim()); // 👈 added search param
+
+      const url = `daily/live_attendance/list?${params.toString()}`;
+      const response: any = await apiHelper.get(url);
       return response.data;
     } catch (error: any) {
-     
       return rejectWithValue(error.response?.data || "Something went wrong");
     }
   }
 );
-
-
 
 const PunchHisSlice = createSlice({
   name: 'PunchHisSlice',
@@ -74,22 +73,52 @@ const PunchHisSlice = createSlice({
       .addCase(dailyattendance.pending, (state) => {
         state.loading = true;
       })
-      .addCase(dailyattendance.fulfilled, (state, action) => {
-        state.loading = false;
-        state.error = null;
+.addCase(dailyattendance.fulfilled, (state, action) => {
+  state.loading = false;
+  state.error = null;
 
-        // If API returns an empty array, no more data
-        if (!action.payload.employee_details?.length) {
-          state.hasMore = false;
-        } else {
-          // Append new data instead of replacing
-          state.employee_details = [
-            ...state.employee_details,
-            ...action.payload.employee_details,
-          ];
-          state.page += 1; // increment page
-        }
-      })
+  const { employee_details = [], pagination } = action.payload || {};
+
+  if (!employee_details.length) {
+    state.hasMore = false;
+    return;
+  }
+
+  // normalize employee data with latest photo/time
+  const normalizedEmployees = employee_details.map((emp: any) => {
+    if (!emp.attendance_results?.length) return emp;
+
+    const latest = [...emp.attendance_results].sort((a, b) => {
+      const timeA = new Date(a.punch_out_time || a.punch_in_time).getTime();
+      const timeB = new Date(b.punch_out_time || b.punch_in_time).getTime();
+      return timeB - timeA;
+    })[0];
+
+    return {
+      ...emp,
+      latestPhoto: latest.outtime_photo_url || latest.intime_photo_url,
+      latestTime: latest.punch_out_time || latest.punch_in_time
+        ? new Date(latest.punch_out_time || latest.punch_in_time).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          })
+        : "--:--",
+    };
+  });
+
+  // Append new data
+  state.employee_details = [...state.employee_details, ...normalizedEmployees];
+
+  // 🔹 Check pagination before increment
+  if (pagination?.page < pagination?.total_pages) {
+    state.page += 1;
+    state.hasMore = true;
+  } else {
+    state.hasMore = false;
+  }
+})
+
       .addCase(dailyattendance.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
@@ -97,5 +126,5 @@ const PunchHisSlice = createSlice({
   },
 });
 
-
+export const { resetAttendance } = PunchHisSlice.actions;
 export default PunchHisSlice.reducer;

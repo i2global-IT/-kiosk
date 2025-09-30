@@ -9,14 +9,9 @@ export const desingation = createAsyncThunk(
   'employee_designation',
   async ( ) => {
     try {
-     
       const response: any = await apiHelper.get('employee_designation');
-
-      console.log('Employee Register Response >>>', response.data);
-
       return response.data;
     } catch (error: any) {
-      console.log('Employee Register Error >>>', error);
      
     }
   }
@@ -24,15 +19,10 @@ export const desingation = createAsyncThunk(
 export const department = createAsyncThunk(
   'employee_department',
   async ( ) => {
-    try {
-     
+    try { 
       const response: any = await apiHelper.get('employee_department');
-
-      console.log('Employee Register Response >>>', response.data);
-
       return response.data;
     } catch (error: any) {
-      console.log('Employee Register Error >>>', error);
     }
   }
 );
@@ -65,9 +55,7 @@ const FilterSlice = createSlice({
         state.loading = false;
         state.error = null;
         state.desingationList = action.payload; // assuming API returns this
-      
-console.log("desingation list.....",state.desingationList)
-      
+        
       })
    .addCase(department.pending, (state) => {
         state.loading = true;

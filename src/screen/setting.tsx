@@ -5,40 +5,33 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  SafeAreaView,
   ScrollView,
   Linking,
   Modal,
 } from "react-native";
-import LinearGradient from "react-native-linear-gradient";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import { Header } from "./PunchHistory";
 import CustomTextField from "../component/CustomTextfield";
 import GlobalStyle from "../uitility/GlobalStyle";
 import CustomButton from "../component/CustomButton";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import SettingViewModel from "../viewModel/SettingViewModel";
-import { useSelector } from "react-redux";
-
-import { RootState } from "../redux/store";
 import Storage from "../uitility/Sotrage";
 import { AppColors } from "../uitility/color";
 const SettingsScreen = ({ navigation }) => {
-  const [passwordVisible, setPasswordVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-
-  // ✅ State variables for device info
-  const [deviceName, setDeviceName] = useState("");
+  const [showPasswordField, setShowPasswordField] = useState(false);
+  const [enteredPassword, setEnteredPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+    const [deviceName, setDeviceName] = useState("");
   const [deviceEmail, setDeviceEmail] = useState("");
   const [devicePassword, setDevicePassword] = useState("");
-
   const handleConfirmLogout = async () => {
     try {
+      Storage.setItem('loginaccess', false);
       await AsyncStorage.clear(); // Clear storage
       setModalVisible(false);
       navigation.replace("login"); // Go to login
     } catch (error) {
-      console.log("Error clearing storage:", error);
     }
   };
 
@@ -55,16 +48,31 @@ const SettingsScreen = ({ navigation }) => {
       setDeviceName(name || "");
       setDeviceEmail(email || "");
       setDevicePassword(password || "");
+      // console.log("password.......",password)
     } catch (error) {
-      console.log("Error loading device info:", error);
+      // console.log("Error loading device info:", error);
+    }
+  };
+
+
+
+  const checkPassword = async () => {
+    // console.log("Error loading device info:", enteredPassword,"jhjhjhjhj",devicePassword);
+
+    if (enteredPassword == devicePassword) {
+      setShowPasswordField(false);
+      setEnteredPassword("");
+      setErrorMessage(""); // clear error
+      navigation.navigate("RegisterFaceScreen");
+    } else {
+      setErrorMessage("Incorrect password"); // show validation message instead of alert
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={{backgroundColor:AppColors.white,flex:1}}>
       {/* Header */}
-      <Header title={"Settings"} onBack={() => navigation.pop()} />
-
+      <Header title={"Settings"} onBack={() => navigation.pop()} onpop={false} />
       <ScrollView contentContainerStyle={styles.content}>
         <Text
           style={[
@@ -78,40 +86,58 @@ const SettingsScreen = ({ navigation }) => {
         {/* Device Info */}
         <CustomTextField
           heading={"Device name"}
+          maxLength={50}
           hintText=""
           value={deviceName || "--"}
           readOnly={true}
           isRequired={false}
-          onChangeText={() => {}}
+          onChangeText={() => { }}
         />
 
-        <CustomTextField
-          heading={"Email"}
-          hintText={"attendance@gmail.com"}
-          readOnly={true}
-          value={deviceEmail || "--"}
-          isRequired={false}
-          onChangeText={() => {}}
-        />
 
-        <CustomTextField
-          heading={"Password"}
-          hintText={"*********"}
-          value={
-            passwordVisible
-              ? devicePassword || ""
-              : devicePassword
-              ? "*********"
-              : "--"
-          }
-          readOnly={true}
-          isRequired={false}
-          suffixIcon={!passwordVisible ? "eye-off" : "eye"}
-          onTap={() => setPasswordVisible(!passwordVisible)}
-          onChangeText={() => {}}
-        />
+        <TouchableOpacity
+          style={styles.option}
+          onPress={() => setShowPasswordField(!showPasswordField)} // toggle on click
+        >
+          <Ionicons name="lock-closed" size={20} color="#8E31EC" />
+          <Text style={styles.optionText}>Add Employee</Text>
+          <Ionicons
+            name={showPasswordField ? "chevron-up" : "chevron-down"} // change icon dynamically
+            size={20}
+            color="#8E31EC"
+          />
+        </TouchableOpacity>
 
-        {/* Privacy Policy */}
+        {showPasswordField && (
+          <View>
+
+
+            <View style={styles.passwordContainer}>
+              <TextInput
+                placeholder="Enter Password"
+                
+                secureTextEntry
+                value={enteredPassword}
+                onChangeText={(text) => {
+                  setEnteredPassword(text);
+                  setErrorMessage(""); // clear error on typing
+                }}
+                style={[GlobalStyle.semibold_black,styles.input]}
+              />
+
+              {/* Validation message */}
+
+
+              <TouchableOpacity style={styles.submitBtn} onPress={checkPassword}>
+                <Text style={{ color: "#fff" }}>Submit</Text>
+              </TouchableOpacity>
+            </View>
+            {errorMessage ? (
+              <Text style={[GlobalStyle.regular_FontMedium, { color: "red", marginTop: 5, marginBottom: 10 }]}>{errorMessage}</Text>
+            ) : null}
+          </View>
+        )}
+
         <TouchableOpacity
           style={styles.option}
           onPress={() => Linking.openURL("https://i2global.in/policies/")}
@@ -122,7 +148,6 @@ const SettingsScreen = ({ navigation }) => {
           </Text>
           <Ionicons name="chevron-forward" size={20} color="#8E31EC" />
         </TouchableOpacity>
-
         {/* Help Center */}
         <TouchableOpacity
           style={styles.option}
@@ -136,9 +161,7 @@ const SettingsScreen = ({ navigation }) => {
           <Text style={styles.optionText}>Help center</Text>
           <Ionicons name="chevron-forward" size={20} color="#8E31EC" />
         </TouchableOpacity>
-
         <View style={{ height: 20 }}></View>
-
         <CustomButton title="Logout" onPress={() => setModalVisible(true)} />
       </ScrollView>
 
@@ -162,13 +185,19 @@ const SettingsScreen = ({ navigation }) => {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 };
 
 
 const styles = StyleSheet.create({
-     overlay: {
+  submitBtn: {
+    backgroundColor: "#8E31EC",
+    padding: 10,
+    borderRadius: 6,
+    alignItems: "center",
+  },
+  overlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
@@ -221,16 +250,15 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     borderRadius: 10,
     padding: 12,
-    marginBottom: 15,
+    margin: 5,
     color: "#333",
+    width: "75%",
+    alignSelf: "center"
   },
   passwordContainer: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 10,
-    marginBottom: 15,
+    justifyContent: "space-between"
   },
   eyeIcon: {
     paddingHorizontal: 10,

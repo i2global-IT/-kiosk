@@ -8,7 +8,6 @@ export const fetchDevices :any= createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
         const response: any = await apiHelper.get('kiosk/devices',); 
-   console.log("deice response....",response?.data)
       return response.data; // expecting an array
     } catch (error) {
       return rejectWithValue(error.response?.data || "Something went wrong");

@@ -1,5 +1,10 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import apiHelper from "../../service/api";
+import { baseUrl } from "../../service/endpoint";
+import Storage from "../../uitility/Sotrage";
+import axios from "axios";
+import { startLoading, stopLoading } from "./ui";
+import { store } from "../store";
 
 export const newEmployee = createAsyncThunk(
   'employee/register',
@@ -8,20 +13,36 @@ export const newEmployee = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response: any = await apiHelper.post('attendance/register', {
-        employee_id: "INIT010",
-        image: imagebase64,
-        collection_id: 'dummy_test',
-      });
+        store.dispatch(startLoading());
+  const token = await Storage.getItem("accessToken");
 
-      console.log('Employee Register Response >>>', response.data);
-
+      const formData = new FormData();
+         formData.append("image", {
+        uri: imagebase64,
+        name: "face.jpg",
+        type: "image/jpeg",
+      } as any);
+      formData.append("employee_id", employeeid|| "");
+      const response = await axios.post(
+        `${baseUrl.baseUrl}attendance/register`,
+        formData,
+        {
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "multipart/form-data",
+            "X-App-key": "33",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       return response.data;
     } catch (error: any) {
-      console.log('Employee Register Error >>>', error);
       return rejectWithValue(
         error.response?.data?.message || error.message || 'Something went wrong'
       );
+    }
+    finally{
+        store.dispatch(stopLoading());
     }
   }
 );
@@ -31,36 +52,34 @@ const addEmp = createSlice({
     empId: null,
     loading: false,
     error: null,
-    message: null,
+    message: "",
   },
   reducers: {
       resetMessage: (state) => {
-    state.message = null;
+    state.message = "";
     state.error = null;
   },
     clearMessage: (state) => {
-      state.message = null;
-    },
+      state.message = "";
+    }
   },
   extraReducers: (builder) => {
     builder
       .addCase(newEmployee.pending, (state) => {
         state.loading = true;
-        state.error = null;
-        state.message = null;
+    
       })
       .addCase(newEmployee.fulfilled, (state, action) => {
         state.loading = false;
         state.error = null;
         state.empId = action.payload.employee_id; // assuming API returns this
         state.message = 'Employee registered successfully 🎉';
-
       
       })
       .addCase(newEmployee.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        state.message = action.payload as string;
+        state.message = action.payload;
       });
   },
 });

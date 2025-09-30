@@ -8,9 +8,14 @@ import {
   StyleSheet,
   Dimensions,
   ImageBackground,
+  Animated,
+  BackHandler,
+  StatusBar,
 } from "react-native";
 import { images } from "../uitility/image";
 import Storage from "../uitility/Sotrage";
+import GlobalStyle from "../uitility/GlobalStyle";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const { width } = Dimensions.get("window");
 
@@ -28,7 +33,7 @@ const OnboardingScreen = ({ navigation }) => {
         </>
       ),
       subtitle:
-        "Automatically recognize faces in seconds. Punch in/out instantly and track attendance with ease.",
+        "Tap to detect your face and mark attendance instantly",
     },
     {
       id: "2",
@@ -43,10 +48,7 @@ const OnboardingScreen = ({ navigation }) => {
   ];
 
   // handle scroll manually
-  const handleScroll = (event) => {
-    const slideIndex = Math.round(event.nativeEvent.contentOffset.x / width);
-    setCurrentIndex(slideIndex);
-  };
+
     let loginaccess:any;
   // auto scroll effect
   useEffect(() => {
@@ -60,16 +62,39 @@ const OnboardingScreen = ({ navigation }) => {
     return () => clearInterval(interval);
   }, [currentIndex]);
 
-  const renderItem = ({ item }) => (
-    <View style={[styles.slide, { width }]}>
-      {/* Title */}
-      <Text style={styles.title}>{item.title}</Text>
-      {/* Subtitle */}
-      <Text style={styles.subtitle}>{item.subtitle}</Text>
-    </View>
-  );
+const renderItem = ({ item }) => (
+  <View style={[styles.slide, { width }]}>
+    <Text style={[GlobalStyle.semibold_black, styles.title]}>
+      {item.title}
+    </Text>
+    <Text style={[GlobalStyle.semibold_black, styles.subtitle]}>
+      {item.subtitle}
+    </Text>
+  </View>
+);
 
+const scrollX = useRef(new Animated.Value(0)).current;
+    useEffect(() => {
+    const backAction = () => {
+      BackHandler.exitApp(); // Close the app immediately
+      return true; // Prevent default back navigation
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction
+    );
+
+    return () => backHandler.remove();
+  }, []);
   return (
+    <SafeAreaView style={{flex:1}}>
+      <StatusBar
+                translucent
+                backgroundColor="transparent"
+                barStyle={"dark-content"}
+               // use "dark-content" if your header bg is light
+              />
     <View style={styles.container}>
       {/* Background Image + Logo */}
       <ImageBackground
@@ -77,41 +102,68 @@ const OnboardingScreen = ({ navigation }) => {
         style={styles.header}
         resizeMode="cover"
       >
-        <Image source={images.onboard} style={styles.logo} resizeMode="contain" />
+        {/* <Image source={images.onboard} style={styles.logo} resizeMode="contain" /> */}
       </ImageBackground>
 
       {/* Bottom Card Section */}
       <View style={styles.bottomCard}>
-        <FlatList
-          ref={flatListRef}
-          data={slides}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          onScroll={handleScroll}
-        />
+     <Animated.FlatList
+  ref={flatListRef}
+  data={slides}
+  horizontal
+  pagingEnabled
+  showsHorizontalScrollIndicator={false}
+  renderItem={renderItem}
+  keyExtractor={(item) => item.id}
+  onScroll={Animated.event(
+    [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+    { useNativeDriver: false }
+  )}
+  scrollEventThrottle={16}
+/>
 
         {/* Dots Indicator */}
-        <View style={styles.dotsContainer}>
-          {slides.map((_, index) => (
-            <View
-              key={index}
-              style={[
-                styles.dot,
-                currentIndex === index ? styles.activeDot : null,
-              ]}
-            />
-          ))}
-        </View>
+   <View style={styles.dotsContainer}>
+  {slides.map((_, index) => {
+    const inputRange = [
+      (index - 1) * width,
+      index * width,
+      (index + 1) * width,
+    ];
+
+    const dotWidth = scrollX.interpolate({
+      inputRange,
+      outputRange: [8, 16, 8],
+      extrapolate: "clamp",
+    });
+
+    const dotColor = scrollX.interpolate({
+      inputRange,
+      outputRange: ["#ccc", "#7b2ff7", "#ccc"],
+      extrapolate: "clamp",
+    });
+
+    return (
+      <Animated.View
+        key={index}
+        style={[
+          styles.dot,
+          {
+            width: dotWidth,
+            backgroundColor: dotColor,
+          },
+        ]}
+      />
+    );
+  })}
+</View>
+
 
         {/* Action Button */}
         <TouchableOpacity
           style={styles.button}
           onPress={async () =>{
                 loginaccess = JSON.parse( await Storage.getItem('loginaccess')) 
-            console.log("login ascesss",loginaccess)
             if(loginaccess==true){
   navigation.navigate("HomeScreen")
             }else{
@@ -126,6 +178,7 @@ const OnboardingScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
     </View>
+    </SafeAreaView>
   );
 };
 
@@ -133,17 +186,21 @@ export default OnboardingScreen;
 
 
 const styles = StyleSheet.create({
+
     dotsContainer: {
     flexDirection: "row",
     marginVertical: 15,
   },
-     dot: {
-    height: 8,
-    width: 8,
-    borderRadius: 4,
-    backgroundColor: "#ccc",
-    marginHorizontal: 5,
-  },
+slide: {
+  justifyContent: "center",
+  alignItems: "center",
+},
+dot: {
+  height: 8,
+  borderRadius: 4,
+  marginHorizontal: 5,
+},
+
     activeDot: {
     backgroundColor: "#7b2ff7",
     width: 16,
@@ -168,14 +225,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    padding: 20,
+    padding: 10,
     alignItems: "center",
   },
   title: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "600",
     color: "#000",
     textAlign: "center",
+    width:"100%",
+    padding:10
+    
   },
   highlight: {
     color: "#f44336", // red for emphasis
@@ -190,6 +250,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 10,
     paddingHorizontal: 10,
+    margin:15
   },
   button: {
     marginTop: 20,

@@ -15,9 +15,7 @@ setItem: async (key: string, value: any) => {
     await AsyncStorage.setItem(key, jsonValue);
 
     // ✅ Success log
-    console.log(`✅ Saved key "${key}" with value:`, jsonValue);
   } catch (e) {
-    console.error(`❌ Error saving data for key "${key}":`, e);
   }
 },
 
@@ -34,11 +32,9 @@ getItem: async (key: string) => {
     }
 
     // ✅ Success log
-    console.log(`📦 Retrieved key "${key}" with value:`, parsedValue);
 
     return parsedValue;
   } catch (e) {
-    console.error(`❌ Error reading data for key "${key}":`, e);
     return null;
   }
 },
@@ -49,7 +45,6 @@ getItem: async (key: string) => {
     try {
       await AsyncStorage.removeItem(key);
     } catch (e) {
-      console.error(`Error removing data for key "${key}":`, e);
     }
   },
 
@@ -58,7 +53,6 @@ getItem: async (key: string) => {
     try {
       await AsyncStorage.clear();
     } catch (e) {
-      console.error('Error clearing storage', e);
     }
   },
 };

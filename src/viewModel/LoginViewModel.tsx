@@ -1,9 +1,7 @@
 // useLoginViewModel.js
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-
-import { setEmail, setPassword, loginUser } from '../redux/slice/loginSlic';
-import { Alert } from 'react-native';
+import { loginUser } from '../redux/slice/loginSlic';
 import { RootState } from '../redux/store';
 import Toast from 'react-native-toast-message';
 import { useNavigation } from '@react-navigation/native';
@@ -13,18 +11,17 @@ export default function useLoginViewModel() {
 const [emailError, setEmailError] = useState("");
 const [passError, setPasswordError] = useState("");
   const [password, setPassword] = useState('');
+  const [orgkey, setOrg] = useState('');
+  const [orgError, setOrgError] = useState("");
   const navigation=useNavigation();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const dispatch = useDispatch();
   // const { loading, error, token } = useSelector((state:any) => state.auth);
-const { user, accessToken, loading, error } = useSelector(
-  (state: RootState) => state.login   // 'auth' must match slice name in store
-);
+
 const handleLogin = () => {
+
   setIsSubmitted(true); // ✅ enable error visibility
-
   let valid = true;
-
   if (!email) {
     setEmailError("Email is required");
     valid = false;
@@ -41,18 +38,23 @@ const handleLogin = () => {
   } else {
     setPasswordError("");
   }
-
-  // if (!valid) return; // stop if errors exist
-
+  if (!orgkey) {
+    setOrgError("Organization Key is required");
+    valid = false;
+  } else {
+    setOrgError("");
+  }
+ if (!valid) return; // stop if errors exist
   // ✅ proceed with API call
-  dispatch(loginUser({ email, password }))
+  dispatch(loginUser({ email, password ,orgkey}))
     .unwrap()
     .then((res) => {
-      Toast.show({ type: "success", text1: "Success", text2: "Login Successful" });
+      Toast.show({ type: "success", text1: "😃 Success", text2: "Login Successful" });
       navigation.navigate("HomeScreen");
     })
     .catch((err) => {
-      Toast.show({ type: "error", text1: "Failed", text2: err?.message || "Login failed" });
+      
+      Toast.show({ type: "error", text1: `${err}`, text2: "Failed"});
     });
 };
 
@@ -62,7 +64,7 @@ const handleLogin = () => {
     email,
     setEmail,
     password,
-    setPassword,
+    setPassword,orgkey, setOrg,orgError,
     handleLogin,emailError,passError,isSubmitted
     // loading,
     // error,

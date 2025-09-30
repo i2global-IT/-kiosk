@@ -6,25 +6,19 @@ import Storage from '../../uitility/Sotrage';
 // Async thunk for login API call
 export const loginUser = createAsyncThunk(
   '',
-  async ({ email, password }: { email: string; password: string }, { rejectWithValue }) => {
+  async ({ email, password ,orgkey}: { email: string; password: string ,orgkey:string}, { rejectWithValue }) => {
     try {
-  
       // Use apiHelper instead of raw axios
-      const response:any = await apiHelper.post('device_login', {
-
-  device_email: "shanushahbin11@gmail.com",
-  password: "admin123",
-  mobile_app: "true"
-      
+ const response:any = await apiHelper.post('device_login', {
+ device_email: email,
+  password:password,
+  org_key:orgkey,
+  mobile_app: "true"    
       });
-           console.log("Login Error >>>", response.data);
-
       // Assuming API returns { access_token, refresh_token, user }
       return response.data;
     } catch (error: any) {
-      
-      console.log("Login Error >>>", error);
-      return rejectWithValue(
+            return rejectWithValue(
         error.response?.data?.message || error.message || 'Something went wrong'
       );
     }

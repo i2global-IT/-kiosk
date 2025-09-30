@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,10 @@ import {
   Dimensions,
   ScrollView,
   StatusBar,
+  KeyboardAvoidingView,
+  Platform,
+  BackHandler,
+
 } from "react-native";
 import useLoginViewModel from "../viewModel/LoginViewModel";
 import GlobalStyle from "../uitility/GlobalStyle";
@@ -16,16 +20,34 @@ import { AppColors } from "../uitility/color";
 import CustomTextField from "../component/CustomTextfield";
 import CustomButton from "../component/CustomButton";
 import { images } from "../uitility/image";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 
 const { width, height } = Dimensions.get("window");
 
 export const LoginScreen = ({ navigation }) => {
   const viewModel = useLoginViewModel();
+    useEffect(() => {
+    const backAction = () => {
+      BackHandler.exitApp(); // Close the app immediately
+      return true; // Prevent default back navigation
+    };
 
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction
+    );
+
+    return () => backHandler.remove();
+  }, []);
   return (
-    <ScrollView contentContainerStyle={{ flexGrow: 1 }}style={{backgroundColor:AppColors}}>
-  
+    <SafeAreaView style={{ flex: 1, backgroundColor: AppColors.white }}>
+  <KeyboardAvoidingView
+    style={{ flex: 1 }}
+    behavior={Platform.OS === "ios" ? "padding" : "height"}
+    keyboardVerticalOffset={Platform.OS === "ios" ? 0 : StatusBar.currentHeight || 0} // offset for Android statusbar
+  >
+    <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
    <StatusBar
             translucent
             backgroundColor="transparent"
@@ -49,9 +71,9 @@ export const LoginScreen = ({ navigation }) => {
 
         {/* Heading */}
         <Text style={[GlobalStyle.semibold_black,styles.singin]}>Sign in to continue!</Text>
-        <Text style={[GlobalStyle.regular_Font,{color:AppColors.secondHeading,paddingBottom:5}]}>
+        {/* <Text style={[GlobalStyle.regular_Font,{color:AppColors.secondHeading,paddingBottom:5}]}>
           Record attendance and track in real time
-        </Text>
+        </Text> */}
 
         {/* Email Field */}
         <View style={styles.inputContainer}>
@@ -61,6 +83,7 @@ export const LoginScreen = ({ navigation }) => {
   heading="Email ID"
   hintText="Enter your Email"
   prefixIcon="person-outline"
+  maxLength={50}
   onChangeText={viewModel.setEmail}
   hasError={viewModel.isSubmitted && !!viewModel.emailError}  // ✅ show error only after submit
   errorText={viewModel.emailError}
@@ -71,19 +94,31 @@ export const LoginScreen = ({ navigation }) => {
   hintText="Enter your Password"
   prefixIcon="lock-closed-outline"
   secureTextEntry
+    maxLength={50}
    onChangeText={viewModel.setPassword}  
   hasError={viewModel.isSubmitted && !!viewModel.passError}  // ✅ show error only after submit
   errorText={viewModel.passError}
+/>
+<CustomTextField
+  value={viewModel.orgkey}
+  heading="Organization key"
+  hintText="i2g"
+
+  secureTextEntry
+    maxLength={50}
+   onChangeText={viewModel.setOrg}  
+  hasError={viewModel.isSubmitted && !!viewModel.orgError}  // ✅ show error only after submit
+  errorText={viewModel.orgError}
 />
       
         </View>
         <View style={{width:"100%"}}>
 <CustomButton  title="Sign in"  onPress={()=>{viewModel.handleLogin()}}/>
         </View>
-
-  
       </View>
     </ScrollView>
+    </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
@@ -94,7 +129,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#fff",
     padding: width * 0.05,
-    paddingBottom:5
+    paddingBottom:5,
+
   },
   logo: {
     width: width * 0.4,
@@ -119,7 +155,7 @@ const styles = StyleSheet.create({
     marginBottom: height * 0.03,
   },
   inputContainer: {
-      marginTop: height * 0.05,
+
     width: "100%",
     marginBottom: height * 0.02,
   },

@@ -9,6 +9,8 @@ import {
   Dimensions,
   Animated,
   StatusBar,
+  Modal,
+  Platform,
 } from "react-native";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import LinearGradient from "react-native-linear-gradient";
@@ -22,11 +24,6 @@ export const RegisterFaceScreen = ({navigation}) => {
     const viewModel=useAddEmployeeViewModel()
      const [showDialog, setShowDialog] = useState(false);
 
-  const handleRegisterFace = () => {
-    // 👉 do your registration logic here
-    // after success, show dialog
-    setShowDialog(true);
-  };
   return (
     <View style={styles.container}>
      <StatusBar
@@ -37,17 +34,20 @@ export const RegisterFaceScreen = ({navigation}) => {
            />
       <View style={styles.header}>
         <TouchableOpacity
-        onPress={()=>{navigation.pop()}}>
-  <Ionicons name="arrow-back" size={22} color="#000" />
+        onPress={()=>{navigation.pop()}} style={{backgroundColor:"#D2D1D147",
+          padding:5,marginTop:8
+        ,borderRadius:8}}>
+  <Ionicons name="chevron-back" size={22} color="#000" />
         </TouchableOpacity>
       
-        <Text style={styles.headerTitle}>Add employee</Text>
+        <Text style={[GlobalStyle.semibold_black,styles.headerTitle]}>Add employee</Text>
       </View>
 
    
-<CustomTextField heading='Employee ID' hintText='EMp001' onChangeText={function (text: string): void {
-        throw new Error("Function not implemented.");
-      } }/>
+<CustomTextField heading='Employee ID' hintText='eg.,EMP001' 
+  maxLength={50}
+value ={viewModel?.empid}
+ onChangeText={viewModel.setempid}/>
     {viewModel?.errors.empid && (
           <Text style={GlobalStyle.errorText}>{viewModel.errors.empid}</Text>
         )}
@@ -62,19 +62,19 @@ export const RegisterFaceScreen = ({navigation}) => {
       />
   </View>
 </View>
-
       {/* Instructions */}
       <Text style={[GlobalStyle.semibold_black,styles.lookText]}>Look at the camera</Text>
-      <View style={styles.noteRow}>
-        <View style={styles.dot} />
+      <View style={styles.noteRow}>   
+        <View style={{flexDirection:"row"}}>
+          <Ionicons name={"information-circle"} size={16} color={"#FE7B01"}/>
+        </View>
         <Text style={[GlobalStyle.semibold_black,styles.note]}>
           Upload a clear front photo in good light with only one visible face.
         </Text>
       </View>
-
       {/* Register Button */}
       <TouchableOpacity
-onPress={viewModel?.onSave}
+onPress={viewModel?.handleRegisterClick}
       activeOpacity={0.8} style={styles.buttonWrapper}>
         <LinearGradient
           colors={[AppColors.gradient, AppColors.gradient2, ]}
@@ -88,7 +88,54 @@ onPress={viewModel?.onSave}
         visible={showDialog}
         onClose={() => setShowDialog(false)}
       />
-      {/* Bottom Tabs */}
+   {/* ---- Face Preview Modal ---- */}
+      <Modal
+        visible={viewModel?.previewVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() =>viewModel?. setPreviewVisible(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContent}>
+            <Text style={[GlobalStyle.semibold_black,styles.modalTitle]}>Face Preview</Text>
+            
+            {/* Camera Circle */}
+            <View style={styles.outerCircles}>
+              <View style={styles.cameraCircle}>
+               {/* Captured Image Preview */}
+            {viewModel?.image ? (
+              <Image 
+                source={{ uri: viewModel?.image }} 
+                style={styles.previewImage} 
+              />
+            ) : (
+              <Text>No image captured</Text>
+            )}
+              </View>
+            </View>
+
+            {/* Action Buttons */}
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.actionButton, { backgroundColor: "#ccc" }]}
+                onPress={() =>viewModel?. setPreviewVisible(false)}
+              >
+                <Text style={[GlobalStyle.semibold_black,styles.actionText]}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.actionButton, { backgroundColor: "#4CAF50" }]}
+                onPress={()=>{
+viewModel?.onSave();
+// viewModel?.setPreviewVisible(false)
+                }}
+              >
+                <Text style={[GlobalStyle.semibold_black,styles.actionText, { color: "#fff" }]}>Submit</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
       
     </View>
   );
@@ -97,6 +144,71 @@ onPress={viewModel?.onSave}
 export default RegisterFaceScreen;
 
 const styles = StyleSheet.create({
+ outerCircles: {
+  width: 220,
+  height: 220,
+  borderRadius: 110,
+  borderWidth: 4,
+  borderColor: "#4CAF50",
+  justifyContent: "center",
+  alignItems: "center",
+  overflow: "hidden", // 👈 ensures cropping inside circle
+},
+cameraCircle: { 
+  width: "100%", 
+  height: "100%", 
+  borderRadius: 110, 
+  overflow: "hidden" 
+},
+previewImage: {
+  width: "100%",   // 👈 fill the circle width
+  height: "100%",  // 👈 fill the circle height
+  resizeMode: "cover", // 👈 crop instead of stretch
+  borderRadius: 110, // 👈 keep circular
+},
+   containers: { flex: 1, backgroundColor: "#fff" },
+  buttonWrapper: { margin: 20, borderRadius: 10, overflow: "hidden" },
+  button: { paddingVertical: 15, alignItems: "center", borderRadius: 10 },
+  buttonText: { color: "#fff", fontWeight: "bold" },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    width: "90%",
+    borderRadius: 16,
+    padding: 20,
+    alignItems: "center",
+  },
+  modalTitle: { fontSize: 18, fontWeight: "700", marginBottom: 15 },
+  // outerCircles: {
+  //   width: 220,
+  //   height: 220,
+  //   borderRadius: 110,
+  //   borderWidth: 4,
+  //   borderColor: "#4CAF50",
+  //   justifyContent: "center",
+  //   alignItems: "center",
+  //   overflow: "hidden",
+  // },
+  // cameraCircle: { width: "100%", height: "100%", borderRadius: 110, overflow: "hidden" },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+    width: "100%",
+  },
+  actionButton: {
+    flex: 1,
+    padding: 12,
+    marginHorizontal: 8,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  actionText: { fontSize: 16, fontWeight: "600" },
     outerCircle: {
     width: width * 0.8,   // slightly bigger
     height: width * 0.8,
@@ -111,17 +223,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
     padding: 16,
+    marginTop:18
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
-    marginTop:30,
+
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: "700",
     marginLeft: 12,
+    marginTop:10,
+    alignSelf:"center"
   },
   input: {
     borderWidth: 1,
@@ -134,9 +249,10 @@ const styles = StyleSheet.create({
  
   lookText: {
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "700",
     textAlign: "center",
     marginBottom: 8,
+    marginTop:10
   },
   noteRow: {
     flexDirection: "row",
@@ -165,6 +281,7 @@ const styles = StyleSheet.create({
     color:AppColors.secondHeading,
     flex: 1,
     lineHeight: 18,
+    marginLeft:4
   },
   buttonWrapper: {
     alignItems: "center",
